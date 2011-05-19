@@ -1,0 +1,32 @@
+Nagios Automated Downtime Scheduler - A cron activated downtime scheduler for Na
+gios hosts/services.
+
+Copyright (C) 2004 - Kelly Cobean (kcobean@adelphia.net)
+Licensed under the GPL 2 - See LICENSE file for details.
+
+Nagios is a registered trademark of Ethan Galstad. (nagios@nagios.org)
+More information about Nagios can be found at http://www.nagios.org
+
+
+Files that should come with this release:
+
+INSTALL
+LICENSE
+README
+cron.sample
+host_downtime.cfg
+sched_host_downtime
+sched_svc_downtime
+service_downtime.cfg
+
+
+Installation:
+
+1) Unpack the files to a directory.
+2) cp *.cfg /usr/local/nagios/etc (or wherever your nagios etc directory is)
+3) cp sched* /usr/local/nagios/bin (or wherever your nagios bin directory is) 
+4) cron.sample is a reference file that samples a solaris root crontab.  Adjust as necessary to create your cron job 
+5) edit .cfg files as necessary for your environment(see files for details)
+6) edit, as necessary the scheduler files for binary locations, etc.(see files for details
+7) Test, test, test.
+8) Enjoy the scheduled silence.

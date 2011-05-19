@@ -1,0 +1,3 @@
+01 00 * * * /usr/local/nagios/bin/sched_svc_downtime
+01 00 * * * /usr/local/nagios/bin/sched_host_downtime
+

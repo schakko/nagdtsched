@@ -1,0 +1,114 @@
+#!/bin/bash
+#
+# Write commands into the Nagios command file to schedule service
+# downtime.
+#
+# Author: Kelly Cobean, Jr. <cobean@att.com>
+#
+# Based on a similar script by Sam Tilders <sam@jovianprojects.com.au>
+#
+# Requires:
+#	GNU Date (Solaris' native date command sucks.  Check /opt/sfw/bin
+#		for the gdate binary. If you're running on linux,
+#		the 'date' binary is what you need, just make sure to
+#		adjust the 'DATECMD' variable in this script.
+#		
+#	Bash shell
+#
+# NOTES:
+# 1) In order for Nagios to process any commands that
+#    are written to the command file, you must enable
+#    the check_external_commands option in the main
+#    configuration file.
+#
+# CAVEATS:
+# This script was written on Solaris8, so if you are running it on 
+# Linux (like most sane people would), be sure to test thoroughly and
+# adjust the variables as necessary.
+# I'm not fancy enough to do the whole O/S detection thing, and on Solaris,
+# all bets are off regarding where some of the binaries would be anyway.
+#
+# This script calculates the necessary UNIX times for TODAYS calendar date
+# *PLUS* the time specified in the downtime file.  This script cannot be
+# used to schedule downtimes for "tomorrow" or any other day that isn't the
+# current day.  As such, it's recommended that you run this script daily at
+# mid-night (or 12:01 or similar) to set your regularly scheduled downtimes
+# for each day.
+# There is, however, enough intelligence in the script so that you can 
+# determine which days you want downtime to be scheduled for and only
+# schedule it when the day of the week equals the day specified in the 
+# downtime file.  This allows for fairly flexible dowtime scheduling.
+#
+# See the downtime file for details and examples.
+
+if [ $# -gt 0 ]; then
+	usage
+	exit 1
+fi
+
+# Set Global Variables...
+
+DATECMD="date"
+ECHOCMD="echo"
+CONF_FILE="service_downtime.cfg"
+CMD_FILE="/var/lib/nagios3/rw/nagios.cmd"
+COMMENT="Regularly Scheduled Dowtime"
+SLEEPCMD="sleep"
+GREPCMD="grep"
+#C_UTIME=`$DATECMD +%s`
+C_YMD=`$DATECMD +%Y-%m-%d`
+C_DTIME=`$DATECMD +%Y-%m-%d-%H-%M-%S | awk -F- '{ print $1"-"$2"-"$3,$4":"$5":""00" }'`
+C_DOW=`$DATECMD +%w`
+
+# Begin processing of the config file
+
+for i in `cat $CONF_FILE | grep -v "^#"`
+ do
+  # Set the current UNIX Time for each iteration of through the .cfg file
+  C_UTIME=`$DATECMD +%s`
+# Test for comments
+   $ECHOCMD  $i | $GREPCMD "#" > /dev/null
+   if [ $? = 1 ]; then 
+     # Split line into separate fields (out1-7)
+     n=0
+     for field in `$ECHOCMD $i | awk -F, '{ print $1,$2,$3,$4,$5,$6 }'`
+       # Set increment variable equal to each field
+       do
+       n=`expr $n + 1`
+       eval out$n="$field"
+       done
+     # Test each stanza in config file to see if it applies today
+     $ECHOCMD $out6 | $GREPCMD $C_DOW > /dev/null
+     if [ $? = 0 ]; then
+       # Set unix start time variable.
+       S_UTIME=`$DATECMD -d "$C_YMD $out3" +%s`
+       # Set unix finish time variable to start time + duration.
+       F_UTIME=`expr $S_UTIME + $out4`
+	# Now that we have all of our variables, get them into the
+	# Nagios command file.
+        $ECHOCMD "[$C_UTIME] SCHEDULE_SVC_DOWNTIME;$out1;$out2;$S_UTIME;$F_UTIME;1;0;$out4;$out5;$COMMENT"  >> $CMD_FILE
+        $SLEEPCMD 1
+     fi
+   fi 
+done
+
+usage()
+{
+        echo " "
+        echo "This script is meant to be executed by cron daily."
+        echo "The downtime.cfg file is read and those entries"
+        echo "are inserted as 'external commands' (see nagios doc's"
+        echo "for details) using the nagios.cmd file."
+        echo "Format for the config file is as follows:"
+        echo ""
+        echo "<host>,<svc>,<start-time>,<duration>,<user>,<days_of_week_to_run>"
+        echo ""
+        echo "Please note that username should be your Nagios login and"
+        echo "start time should be in the format of HH:MM:SS"
+        echo "Duration is given in seconds, and the <host> and <svc>"
+        echo "variables are case sensitive (aren't pretty much all things"
+        echo "unix?)"
+        echo "See the examples in the config files for more details"
+        echo " "
+}       
+

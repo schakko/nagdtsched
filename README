@@ -1,0 +1,18 @@
+Nagios Automated Downtime Scheduler - A cron activated downtime scheduler for Nagios hosts/services.
+
+Copyright (C) 2004 - Kelly Cobean (kcobean@adelphia.net)
+Licensed under the GPL 2 - See LICENSE file for details.
+
+Nagios is a registered trademark of Ethan Galstad. (nagios@nagios.org)
+More information about Nagios can be found at http://www.nagios.org
+ 
+See INSTALL for installation instructions.
+See LICENSE for a copy of the GPL 2 License.
+
+These scripts are loosely based on a similar script by Sam Tilders (sam@jovianprojects.com.au)
+
+The purpose of this tool is to use cron to schedule downtime for hosts or services that have regularly scheduled downtimes (like a Windows box being rebooted once a week to get all of the updates applied....yuck)
+
+Please note that while most sane people run Nagios on Linux (Power to the Penguin!), these scripts were written to run on Solaris8.  While these were written to use bash on Solaris, Sun and Linux just do things a little differently, and put binaries in different places.  Basically what I'm getting at is that you need to test these scripts, and will probably have to perform some minor tweaking to get them to work just right for your system.  Check variables, binary locations, etc.  Once you get them working like you want them to, they run very reliably.  
+
+Hope they prove useful for you. 
